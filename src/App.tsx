@@ -297,17 +297,81 @@ export default function App() {
     }
   };
 
+  const uploadAudioToGcs = async (
+    fileName: string, 
+    file: File | null, 
+    base64: string | null
+  ): Promise<{ analysisId: string; gcsUri: string } | null> => {
+    if (!user) return null;
+    if (!file && !base64) return null;
+
+    const token = await user.getIdToken();
+    const signedRes = await fetch("/api/analyses/signed-upload-url", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({ fileName })
+    });
+
+    if (!signedRes.ok) {
+      throw new Error("Impossible de générer l'URL de téléversement signée.");
+    }
+
+    const { signedUrl, gcsUri, analysisId } = await signedRes.json();
+
+    let audioBlob: Blob;
+    if (file) {
+      audioBlob = file;
+    } else {
+      const response = await fetch(`data:audio/wav;base64,${base64}`);
+      audioBlob = await response.blob();
+    }
+
+    const gcsUploadRes = await fetch(signedUrl, {
+      method: "PUT",
+      headers: { "Content-Type": "audio/wav" },
+      body: audioBlob
+    });
+
+    if (!gcsUploadRes.ok) {
+      throw new Error("Échec du téléversement du binaire vers GCS.");
+    }
+
+    return { analysisId, gcsUri };
+  };
+
   // Manual save for existing results
   const handleSaveReportToCloud = async () => {
     if (!user) return;
     setIsSavingManual(true);
     setErrorText(null);
     try {
+      let customDocId = activeAnalysisId || undefined;
+      
+      if (!customDocId) {
+        try {
+          const uploadResult = await uploadAudioToGcs(
+            selectedFileName || "Rapport_Analysé.wav",
+            selectedFile,
+            base64Data
+          );
+          if (uploadResult) {
+            customDocId = uploadResult.analysisId;
+            setActiveAnalysisId(customDocId);
+          }
+        } catch (uploadErr: any) {
+          console.warn("GCS upload during manual save failed:", uploadErr);
+        }
+      }
+
       const docId = await saveAnalysisToFirestore(
         user.uid,
         selectedFileName || "Rapport_Analysé.wav",
         selectedFile?.size || 409600,
-        analysis
+        analysis,
+        customDocId
       );
       if (docId) {
         setSelectedHistoryId(docId);
@@ -330,6 +394,7 @@ export default function App() {
     });
     setIsDemo(false);
     setSelectedHistoryId(record.id);
+    setActiveAnalysisId(record.id);
     setSelectedFileName(record.fileName);
     setBase64Data(null);
     setSelectedFile(null);
@@ -395,6 +460,7 @@ export default function App() {
     setAudioUrl(url);
     setErrorText(null);
     setSelectedHistoryId(null);
+    setActiveAnalysisId(null);
   };
 
   const handleClearFile = () => {
@@ -405,6 +471,7 @@ export default function App() {
     setAudioUrl(null);
     setErrorText(null);
     setSelectedHistoryId(null);
+    setActiveAnalysisId(null);
     // Return to showing demo analysis data to avoid a blank display
     setAnalysis(demoAnalysis);
     setIsDemo(true);
@@ -435,37 +502,12 @@ export default function App() {
           setBackendStatus("uploading");
           userToken = await user.getIdToken();
           
-          const signedRes = await fetch("/api/analyses/signed-upload-url", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${userToken}`
-            },
-            body: JSON.stringify({ fileName: selectedFileName })
-          });
-
-          if (signedRes.ok) {
-            const { signedUrl, gcsUri, analysisId } = await signedRes.json();
-            customDocId = analysisId;
-
-            // Convertir base64 en Blob binaire pour le téléversement PUT direct vers GCS
-            const audioBlob = await (await fetch(audioUrl!)).blob();
-            
-            setBackendProgress(15);
-            const gcsUploadRes = await fetch(signedUrl, {
-              method: "PUT",
-              headers: { "Content-Type": "audio/wav" },
-              body: audioBlob
-            });
-
-            if (gcsUploadRes.ok) {
-              uploadPayload.gcsUri = gcsUri;
-              console.log("Direct client GCS upload succeeded!");
-            } else {
-              throw new Error("Échec du téléversement du binaire vers GCS.");
-            }
-          } else {
-            throw new Error("Impossible de récupérer l'URL de téléversement signée.");
+          const uploadResult = await uploadAudioToGcs(selectedFileName, selectedFile, base64Data);
+          if (uploadResult) {
+            customDocId = uploadResult.analysisId;
+            setActiveAnalysisId(customDocId);
+            uploadPayload.gcsUri = uploadResult.gcsUri;
+            console.log("Direct client GCS upload succeeded!");
           }
         } catch (uploadErr: any) {
           console.warn("GCS direct upload failed, falling back to base64 payload transit:", uploadErr);
@@ -618,6 +660,7 @@ export default function App() {
     setAudioUrl(null);
     setErrorText(null);
     setSelectedHistoryId(null);
+    setActiveAnalysisId(null);
   };
 
   // 5. Segment timing controller hooks and audio listeners

@@ -34,16 +34,14 @@ export default function AgentPerformancePanel({ turns, overallQuality }: AgentPe
     );
   }
 
-  const firstSpeaker = turns[0]?.speaker || "";
-  
   const hallucinations = overallQuality?.agentHallucinations || [];
   const repeatedQuestions = overallQuality?.agentRepeatedQuestions || [];
   const outOfScopeSteering = overallQuality?.userOutofScopeSteering || [];
   
   // 1. Calculate turn volumes
   const totalTurnsCount = turns.length;
-  const agentTurns = turns.filter(t => t.speaker === firstSpeaker);
-  const clientTurns = turns.filter(t => t.speaker !== firstSpeaker);
+  const agentTurns = turns.filter(t => t.role === "agent");
+  const clientTurns = turns.filter(t => t.role === "client");
   const agentTurnsCount = agentTurns.length;
   const clientTurnsCount = clientTurns.length;
 
@@ -68,8 +66,8 @@ export default function AgentPerformancePanel({ turns, overallQuality }: AgentPe
   for (let i = 1; i < turns.length; i++) {
     const current = turns[i];
     const prev = turns[i - 1];
-    const currentIsAgent = current.speaker === firstSpeaker;
-    const prevIsAgent = prev.speaker === firstSpeaker;
+    const currentIsAgent = current.role === "agent";
+    const prevIsAgent = prev.role === "agent";
     
     // Check if overlap exists (overlap margin >= 50ms)
     if (current.startTime < prev.endTime - 0.05) {

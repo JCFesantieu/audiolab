@@ -162,8 +162,7 @@ export default function SentimentHeatmapPlayer({
       let peakColor = "#94A3B8"; // slate gray standard
       if (currentTurn) {
         const emo = currentTurn.emotion?.toLowerCase() || "";
-        const speakerFirst = turns[0]?.speaker || "";
-        const isAgent = currentTurn.speaker === speakerFirst;
+        const isAgent = currentTurn.role === "agent";
 
         if (emo.includes("frustr") || emo.includes("coler") || emo.includes("anger")) {
           peakColor = "#EF4444"; // vibrant red

@@ -330,12 +330,16 @@ async function startServer() {
                   type: Type.STRING,
                   description: "L'état émotionnel ou ton vocal du locuteur lors de ce tour (ex: 'neutral', 'satisfaction', 'frustration', 'hesitation', 'surprise'). Analyse le ton et le signal acoustique direct.",
                 },
-                interruption: {
+                 interruption: {
                   type: Type.BOOLEAN,
                   description: "Indique par un booléen si ce tour de parole coupe brusquement la parole du locuteur précédent ou chevauche indûment son tour.",
                 },
+                role: {
+                  type: Type.STRING,
+                  description: "Le rôle précis du locuteur pour ce tour de parole. Doit être strictement 'agent' (le conseiller / téléconseiller) ou 'client' (l'interlocuteur / appelant).",
+                },
               },
-              required: ["speaker", "startTime", "endTime", "text", "noiseBackground", "audioQualityScore", "audioQualityNotes", "emotion", "interruption"],
+              required: ["speaker", "startTime", "endTime", "text", "noiseBackground", "audioQualityScore", "audioQualityNotes", "emotion", "interruption", "role"],
             },
           },
           overallQuality: {
@@ -483,6 +487,7 @@ async function startServer() {
                   - Une remarque technique précise (audioQualityNotes)
                   - L'état émotionnel précis (emotion) d'après l'analyse acoustique directe du signal vocal (ex: 'neutral', 'satisfaction', 'frustration', 'hesitation', 'surprise').
                   - Si ce locuteur a interrompu le locuteur précédent ou a parlé en même temps que lui (interruption) de manière intempestive (notamment si l'agent coupe le client).
+                  - Le rôle (role) de l'interlocuteur, qui doit être strictement 'agent' (le conseiller client) ou 'client' (le client/appelant).
                   
                   Produis ensuite une analyse globale de la qualité comprenant : note moyenne, résumé, forces, faiblesses, conseils d'amélioration techniques, ET un audit de conformité de la relation de services clients (Customer Experience CX) :
                   1. Détection des hallucinations importantes de l'agent GE CX (quand une affirmation ou partie de la conversation par l'agent est fausse, inventée ou totalement hors du contexte de la discussion).

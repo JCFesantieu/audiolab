@@ -32,8 +32,8 @@ export default function TranscriptList({
   };
 
   // Get speaker color values to separate participants with Editorial tone
-  const getSpeakerColorClasses = (isFirstSpeaker: boolean) => {
-    if (isFirstSpeaker) {
+  const getSpeakerColorClasses = (isAgent: boolean) => {
+    if (isAgent) {
       return {
         text: "text-wheat",
         dot: "bg-wheat",
@@ -78,23 +78,21 @@ export default function TranscriptList({
 
       <div id="dialogue-scroll" className="space-y-6 max-h-[600px] overflow-y-auto pr-1 custom-scrollbar">
         {(() => {
-          const firstSpeakerName = turns[0]?.speaker || "";
-          
           return turns.map((turn, idx) => {
             const isPlaying = activeTurnIndex === idx;
-            const isFirstSpeaker = turn.speaker === firstSpeakerName;
-            const colors = getSpeakerColorClasses(isFirstSpeaker);
+            const isAgent = turn.role === "agent";
+            const colors = getSpeakerColorClasses(isAgent);
             const hasNoise = turn.noiseBackground && turn.noiseBackground.toLowerCase() !== "aucun" && turn.noiseBackground.toLowerCase() !== "aucun bruit";
 
             return (
               <div 
                 key={idx} 
-                className={`flex w-full ${isFirstSpeaker ? "justify-end" : "justify-start"}`}
+                className={`flex w-full ${isAgent ? "justify-end" : "justify-start"}`}
               >
                 <div
                   id={`turn-block-${idx}`}
                   className={`group relative p-6 bg-white border border-warmgray transition-all duration-200 cursor-pointer w-full max-w-[88%] md:max-w-[78%] ${
-                    isFirstSpeaker 
+                    isAgent 
                       ? "border-r-4 border-r-wheat border-l-warmgray" 
                       : "border-l-4 border-l-charcoal border-r-warmgray"
                   } ${

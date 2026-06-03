@@ -13,6 +13,7 @@ export interface AudioTurn {
   audioQualityNotes: string;
   emotion: string;
   interruption: boolean;
+  role: "agent" | "client";
 }
 
 

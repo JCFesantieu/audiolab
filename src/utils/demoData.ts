@@ -16,7 +16,8 @@ export const demoAnalysis: AudioAnalysis = {
       audioQualityScore: 9,
       audioQualityNotes: "Signal clair, très bon niveau d'amplification, peu de réverbération.",
       emotion: "neutral",
-      interruption: false
+      interruption: false,
+      role: "agent"
     },
     {
       speaker: "Locuteur B (Claire)",
@@ -27,7 +28,8 @@ export const demoAnalysis: AudioAnalysis = {
       audioQualityScore: 6,
       audioQualityNotes: "Bruits de frottement transitoires de haute intensité, saturation par intermittence.",
       emotion: "hesitation",
-      interruption: false
+      interruption: false,
+      role: "client"
     },
     {
       speaker: "Locuteur A (Jean)",
@@ -38,7 +40,8 @@ export const demoAnalysis: AudioAnalysis = {
       audioQualityScore: 8,
       audioQualityNotes: "Voix claire, mais cliquetis mécanique léger en arrière-plan.",
       emotion: "satisfaction",
-      interruption: false
+      interruption: false,
+      role: "agent"
     },
     {
       speaker: "Locuteur C (Michel)",
@@ -49,7 +52,8 @@ export const demoAnalysis: AudioAnalysis = {
       audioQualityScore: 5,
       audioQualityNotes: "Echo de pièce important, claquements de touches à haute percussion couvrant presque les consonnes.",
       emotion: "neutral",
-      interruption: false
+      interruption: false,
+      role: "client"
     },
     {
       speaker: "Locuteur B (Claire)",
@@ -60,7 +64,8 @@ export const demoAnalysis: AudioAnalysis = {
       audioQualityScore: 7,
       audioQualityNotes: "Rapport signal/bruit moyen, quelques rires provoquent des crêtes rapides mais supportables.",
       emotion: "surprise",
-      interruption: true
+      interruption: true,
+      role: "client"
     },
     {
       speaker: "Locuteur A (Jean)",
@@ -71,7 +76,8 @@ export const demoAnalysis: AudioAnalysis = {
       audioQualityScore: 8,
       audioQualityNotes: "Perturbation externe soudaine en fin de segment, mais voix préservée et intelligible.",
       emotion: "satisfaction",
-      interruption: false
+      interruption: false,
+      role: "agent"
     }
   ],
   overallQuality: {

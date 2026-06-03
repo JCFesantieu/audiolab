@@ -1,0 +1,87 @@
+{
+  "entities": {
+    "AudioTurn": {
+      "title": "AudioTurn",
+      "description": "Un tour de parole d'intervenant",
+      "type": "object",
+      "properties": {
+        "speaker": { "type": "string" },
+        "startTime": { "type": "number" },
+        "endTime": { "type": "number" },
+        "text": { "type": "string" },
+        "noiseBackground": { "type": "string" },
+        "audioQualityScore": { "type": "integer" },
+        "audioQualityNotes": { "type": "string" }
+      },
+      "required": ["speaker", "startTime", "endTime", "text", "noiseBackground", "audioQualityScore", "audioQualityNotes"]
+    },
+    "AudioAnalysisOverall": {
+      "title": "AudioAnalysisOverall",
+      "description": "Diagnostic général de l'analyse acoustique",
+      "type": "object",
+      "properties": {
+        "score": { "type": "number" },
+        "summary": { "type": "string" },
+        "noiseTypes": { "type": "array" },
+        "strengths": { "type": "array" },
+        "weaknesses": { "type": "array" },
+        "recommendations": { "type": "array" }
+      },
+      "required": ["score", "summary", "noiseTypes", "strengths", "weaknesses", "recommendations"]
+    },
+    "AnalysisReport": {
+      "title": "AnalysisReport",
+      "description": "Rapport complet d'analyse de conversation audio",
+      "type": "object",
+      "properties": {
+        "ownerId": { 
+          "type": "string",
+          "description": "UID de l'utilisateur Firebase propriétaire du rapport"
+        },
+        "fileName": {
+          "type": "string",
+          "description": "Nom convivial du fichier audio .wav analysé"
+        },
+        "fileSize": {
+          "type": "integer",
+          "description": "Taille physique du fichier d'origine en octets"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Horodatage de la sauvegarde"
+        },
+        "turns": {
+          "type": "array",
+          "description": "Liste de chaque tours de parole du dialogue"
+        },
+        "overallQuality": {
+          "type": "object",
+          "description": "Synthèse détaillée de l'analyse acoustique globale"
+        }
+      },
+      "required": ["ownerId", "fileName", "fileSize", "createdAt", "turns", "overallQuality"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Profil public de l'utilisateur",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["displayName", "createdAt"]
+    }
+  },
+  "firestore": {
+    "analyses/{analysisId}": {
+      "schema": "AnalysisReport",
+      "description": "Collection racine contenant les diagnostics audio analysés"
+    },
+    "users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Informations publiques d'identification de l'usager"
+    }
+  }
+}

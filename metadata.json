@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Diarisation et Analyse Audio",
+  "description": "Analyse de conversations audio .wav : transcription au tour par tour, identification des locuteurs, qualité de signal et détection des bruits parasites.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

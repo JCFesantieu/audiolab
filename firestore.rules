@@ -1,0 +1,100 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Primitive Definitions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Entity Validations
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['displayName', 'photoURL', 'createdAt'])
+        && data.keys().size() <= 4
+        && data.displayName is string
+        && data.displayName.size() <= 128
+        && (data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 1000))
+        && data.createdAt is timestamp;
+    }
+
+    function isValidAnalysisReport(data) {
+      return data.keys().hasAll(['ownerId', 'fileName', 'fileSize', 'createdAt', 'turns', 'overallQuality'])
+        && data.keys().size() == 6
+        && data.ownerId == request.auth.uid
+        && data.fileName is string
+        && data.fileName.size() <= 256
+        && data.fileSize is int
+        && data.fileSize >= 0
+        && data.createdAt is timestamp
+        && data.turns is list
+        && data.turns.size() >= 1
+        && data.turns.size() <= 100
+        && data.overallQuality is map
+        && data.overallQuality.score is number
+        && data.overallQuality.score >= 1.0
+        && data.overallQuality.score <= 10.0
+        && data.overallQuality.summary is string
+        && data.overallQuality.summary.size() <= 10000
+        && data.overallQuality.noiseTypes is list
+        && data.overallQuality.noiseTypes.size() <= 30
+        && data.overallQuality.strengths is list
+        && data.overallQuality.strengths.size() <= 30
+        && data.overallQuality.weaknesses is list
+        && data.overallQuality.weaknesses.size() <= 30
+        && data.overallQuality.recommendations is list
+        && data.overallQuality.recommendations.size() <= 30;
+    }
+
+    // 2. Collection Users Match
+    match /users/{userId} {
+      allow get: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isEmailVerified() && request.auth.uid == userId && isValidUserProfile(incoming()) && incoming().createdAt == request.time;
+      allow update: if isEmailVerified() && request.auth.uid == userId && isValidUserProfile(incoming()) && incoming().createdAt == existing().createdAt;
+      allow delete: if false; // Profiles are immortal
+    }
+
+    // 3. Collection Analyses Match
+    match /analyses/{analysisId} {
+      allow get: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      
+      allow create: if isEmailVerified()
+        && isValidId(analysisId)
+        && isValidAnalysisReport(incoming())
+        && incoming().createdAt == request.time;
+
+      allow update: if isEmailVerified()
+        && isValidId(analysisId)
+        && incoming().ownerId == existing().ownerId
+        && existing().ownerId == request.auth.uid
+        && isValidAnalysisReport(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['fileName']);
+
+      allow delete: if isSignedIn()
+        && isValidId(analysisId)
+        && existing().ownerId == request.auth.uid;
+    }
+  }
+}

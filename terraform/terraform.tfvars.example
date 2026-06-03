@@ -1,0 +1,11 @@
+# ID de votre projet Google Cloud Platform (Obligatoire)
+project_id = "votre-projet-gcp-id"
+
+# Région par défaut pour héberger vos ressources (Optionnel)
+region = "europe-west1"
+
+# Nom du service Cloud Run (Optionnel)
+service_name = "audiolab-service"
+
+# Nom du dépôt Docker Artifact Registry (Optionnel)
+repository_id = "audiolab-repo"

@@ -16,7 +16,7 @@ This document tracks all version releases, features, improvements, and bug fixes
 ### Fixed
 - **Speaker Role Inversion (Voice Matching)**: Fixed a bug where dialogue roles and badges were inverted if a Client spoke first. Replaced the first-speaker heuristics in [SentimentHeatmapPlayer.tsx](file:///Users/jcfesantieu/devlocal/Remix/src/components/SentimentHeatmapPlayer.tsx) and [AgentPerformancePanel.tsx](file:///Users/jcfesantieu/devlocal/Remix/src/components/AgentPerformancePanel.tsx) with explicit, Gemini-diarized `role === "agent"` classifications.
 - **History Recording Playback (Beep Sound)**: Resolved a bug where playback of historic reports from Firestore produced a synthetic "BEEP" sound. Updated `handleAnalyzeFile` and `handleSaveReportToCloud` in [App.tsx](file:///Users/jcfesantieu/devlocal/Remix/src/App.tsx) to ensure local audio files are successfully uploaded to GCS using matching Firestore document IDs (`customDocId`).
-- **Large File Base64 Analysis (Payload Too Large)**: Increased Express `express.json` and `express.urlencoded` body parser payload limits from `100mb` to `500mb` inside [server.ts](file:///Users/jcfesantieu/devlocal/Remix/server.ts) to support Base64 transit of audio files exceeding 20 MB.
+- **Large File Analysis (Universal GCS Ingress)**: Enforced universal client-side streaming to Cloud Storage (`PUT` signed URLs) for all users (both authenticated and anonymous/unauthenticated). Bypasses Cloud Run's strict 32 MB HTTP request limit, allowing seamless analysis of WAV audio files exceeding 20 MB directly via GCS references (`gcsUri`).
 
 ---
 

@@ -94,7 +94,7 @@ async function startServer() {
   });
 
   // Increase payload size bounds as WAV audio files can be quite large (e.g. up to 100MB)
-  app.use(express.json({ limit: "100mb" }));
+  app.use(express.json({ limit: "500mb" }));
   
   // Custom middleware to capture JSON body parser failures (e.g. request entity too large or malformed)
   app.use((err: any, req: any, res: any, next: any) => {
@@ -108,7 +108,7 @@ async function startServer() {
     next();
   });
 
-  app.use(express.urlencoded({ limit: "100mb", extended: true }));
+  app.use(express.urlencoded({ limit: "500mb", extended: true }));
 
   // Health check API
   app.get("/api/health", (req, res) => {

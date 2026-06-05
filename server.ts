@@ -648,10 +648,7 @@ async function startServer() {
   app.post("/api/analyses/signed-upload-url", async (req, res) => {
     logToFile(`[API ROUTE HIT] POST /api/analyses/signed-upload-url`);
     try {
-      const ownerId = decodeFirebaseToken(req.headers.authorization);
-      if (!ownerId) {
-        return res.status(401).json({ error: "Non autorisé. Jeton d'authentification manquant ou invalide." });
-      }
+      const ownerId = decodeFirebaseToken(req.headers.authorization) || "anonymous";
 
       const { fileName } = req.body;
       if (!fileName) {
@@ -692,10 +689,7 @@ async function startServer() {
   app.get("/api/analyses/:analysisId/audio-url", async (req, res) => {
     logToFile(`[API ROUTE HIT] GET /api/analyses/${req.params.analysisId}/audio-url`);
     try {
-      const ownerId = decodeFirebaseToken(req.headers.authorization);
-      if (!ownerId) {
-        return res.status(401).json({ error: "Non autorisé." });
-      }
+      const ownerId = decodeFirebaseToken(req.headers.authorization) || "anonymous";
 
       const { analysisId } = req.params;
       const bucketName = process.env.GCS_BUCKET_NAME || `audiolab-archives-sre-sandbox-340015`;

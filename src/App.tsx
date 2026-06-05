@@ -302,17 +302,18 @@ export default function App() {
     file: File | null, 
     base64: string | null
   ): Promise<{ analysisId: string; gcsUri: string } | null> => {
-    if (!user) return null;
     if (!file && !base64) return null;
 
-    const token = await user.getIdToken();
+    const headers: any = { "Content-Type": "application/json" };
+    if (user) {
+      const token = await user.getIdToken();
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
     const signedRes = await fetch("/api/analyses/signed-upload-url", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify({ fileName })
+      headers,
+      body: JSON.stringify({ fileName: fileName || "enregistrement.wav" })
     });
 
     if (!signedRes.ok) {
@@ -495,25 +496,25 @@ export default function App() {
       let userToken: string | null = null;
       let customDocId: string | undefined = undefined;
 
-      // Si connecté, faire le direct upload GCS pour économiser la mémoire vive du serveur (0Mo RAM)
-      if (user) {
-        try {
-          setBackendProgress(8);
-          setBackendStatus("uploading");
+      // Toujours tenter l'upload direct vers GCS en flux binaire pour éviter la limite HTTP 32Mo de Cloud Run
+      try {
+        setBackendProgress(8);
+        setBackendStatus("uploading");
+        if (user) {
           userToken = await user.getIdToken();
-          
-          const uploadResult = await uploadAudioToGcs(selectedFileName, selectedFile, base64Data);
-          if (uploadResult) {
-            customDocId = uploadResult.analysisId;
-            setActiveAnalysisId(customDocId);
-            uploadPayload.gcsUri = uploadResult.gcsUri;
-            console.log("Direct client GCS upload succeeded!");
-          }
-        } catch (uploadErr: any) {
-          console.warn("GCS direct upload failed, falling back to base64 payload transit:", uploadErr);
+        }
+        
+        const uploadResult = await uploadAudioToGcs(selectedFileName, selectedFile, base64Data);
+        if (uploadResult) {
+          customDocId = uploadResult.analysisId;
+          setActiveAnalysisId(customDocId);
+          uploadPayload.gcsUri = uploadResult.gcsUri;
+          console.log("Direct client GCS upload succeeded!");
+        } else {
           uploadPayload.audioData = base64Data;
         }
-      } else {
+      } catch (uploadErr: any) {
+        console.warn("GCS direct upload failed, falling back to base64 payload transit:", uploadErr);
         uploadPayload.audioData = base64Data;
       }
 

@@ -693,27 +693,41 @@ async function startServer() {
 
       const { analysisId } = req.params;
       const bucketName = process.env.GCS_BUCKET_NAME || `audiolab-archives-sre-sandbox-340015`;
-      const filePath = `${ownerId}/${analysisId}.wav`;
 
       const { Storage } = await import("@google-cloud/storage");
       const storage = new Storage();
       const bucket = storage.bucket(bucketName);
-      const file = bucket.file(filePath);
 
-      // Vérifier si le fichier existe
-      const [exists] = await file.exists();
-      if (!exists) {
+      // Multi-candidate search to locate file whether uploaded by owner, anonymous, or plain ID
+      const pathsToCheck = [
+        `${ownerId}/${analysisId}.wav`,
+        `anonymous/${analysisId}.wav`,
+        `${analysisId}.wav`,
+        analysisId.includes("/") ? analysisId : `anonymous/${analysisId}`
+      ];
+
+      let matchedFile: any = null;
+      for (const p of pathsToCheck) {
+        const candidate = bucket.file(p);
+        const [exists] = await candidate.exists();
+        if (exists) {
+          matchedFile = candidate;
+          break;
+        }
+      }
+
+      if (!matchedFile) {
         return res.status(404).json({ error: "Fichier audio introuvable ou expiré de GCS." });
       }
 
       // Générer l'URL signée pour la lecture (expire dans 15 minutes)
-      const [signedUrl] = await file.getSignedUrl({
+      const [signedUrl] = await matchedFile.getSignedUrl({
         version: "v4",
         action: "read",
         expires: Date.now() + 15 * 60 * 1000,
       });
 
-      logToFile(`[PLAYBACK SIGNED URL] Generated GCS GET signed URL for: ${filePath}`);
+      logToFile(`[PLAYBACK SIGNED URL] Generated GCS GET signed URL for: ${matchedFile.name}`);
 
       return res.json({ signedUrl });
     } catch (err: any) {

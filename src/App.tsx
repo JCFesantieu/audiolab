@@ -401,13 +401,15 @@ export default function App() {
     setSelectedFile(null);
     setErrorText(null);
 
-    // Charger l'URL de lecture signée de GCS de manière hautement sécurisée
-    if (user && record.id) {
+    // Charger l'URL de lecture signée de GCS (accessible en mode connecté ou anonyme)
+    if (record.id) {
       try {
-        const token = await user.getIdToken();
-        const res = await fetch(`/api/analyses/${record.id}/audio-url`, {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
+        const headers: any = {};
+        if (user) {
+          const token = await user.getIdToken();
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+        const res = await fetch(`/api/analyses/${record.id}/audio-url`, { headers });
         if (res.ok) {
           const { signedUrl } = await res.json();
           setAudioUrl(signedUrl);

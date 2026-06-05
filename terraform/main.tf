@@ -7,7 +7,8 @@ locals {
     "firestore.googleapis.com",        # Cloud Firestore
     "firebase.googleapis.com",         # Firebase Services
     "identitytoolkit.googleapis.com",  # Identity Platform (Firebase Auth)
-    "cloudbuild.googleapis.com"        # Google Cloud Build (Serverless builds)
+    "cloudbuild.googleapis.com",       # Google Cloud Build (Serverless builds)
+    "iamcredentials.googleapis.com"    # IAM Service Account Credentials (GCS Signed URLs)
   ]
 }
 
@@ -186,6 +187,13 @@ resource "google_storage_bucket_iam_member" "storage_admin" {
   bucket = google_storage_bucket.audiolab_archives.name
   role   = "roles/storage.objectAdmin"
   member = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
+}
+
+# Accorder la permission de signer des URLs GCS (Service Account Token Creator)
+resource "google_project_iam_member" "token_creator" {
+  project = var.project_id
+  role    = "roles/iam.serviceAccountTokenCreator"
+  member  = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
 }
 
 

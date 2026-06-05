@@ -679,40 +679,9 @@ export default function App() {
       // Direct actual audio playback
       const audio = audioRef.current;
       if (audio) {
-        let hasSeeked = false;
-        let ticks = 0;
-
         audio.currentTime = turn.startTime;
         activeSegmentEndRef.current = turn.endTime;
-        audio.play().then(() => {
-          // Monitor timing bound
-          if (demoIntervalRef.current) clearInterval(demoIntervalRef.current);
-          demoIntervalRef.current = setInterval(() => {
-            const now = audio.currentTime;
-            ticks++;
-
-            if (!hasSeeked) {
-              if (Math.abs(now - turn.startTime) < 2.5) {
-                hasSeeked = true;
-              } else if (ticks > 30) {
-                stopAnyPlayback();
-                return;
-              } else {
-                return;
-              }
-            }
-
-            const segmentSecondsTotal = Math.max(0.1, turn.endTime - turn.startTime);
-            const currentOffsetSec = now - turn.startTime;
-            const progress = (currentOffsetSec / segmentSecondsTotal) * 100;
-            setPlayProgress(Math.min(100, Math.max(0, progress)));
-            setGlobalTime(now);
-
-            if (now >= turn.endTime) {
-              stopAnyPlayback();
-            }
-          }, 100);
-        }).catch(err => {
+        audio.play().catch(err => {
           console.warn("Échec de la lecture.", err);
         });
       }
@@ -796,16 +765,26 @@ export default function App() {
 
     if (isGlobalPlaying) {
       const matchingTurnIndex = analysis.turns.findIndex(
-        t => now >= t.startTime && now <= t.endTime
+        t => now >= t.startTime && now <= (t.endTime + 0.25)
       );
       if (matchingTurnIndex !== -1) {
         setActiveTurnIndex(matchingTurnIndex);
         const t = analysis.turns[matchingTurnIndex];
-        const percent = ((now - t.startTime) / (t.endTime - t.startTime)) * 100;
-        setPlayProgress(percent);
+        const percent = ((now - t.startTime) / Math.max(0.1, t.endTime - t.startTime)) * 100;
+        setPlayProgress(Math.min(100, Math.max(0, percent)));
       } else {
         setActiveTurnIndex(null);
         setPlayProgress(0);
+      }
+    } else if (activeTurnIndex !== null) {
+      // Precise Individual Turn Playback Synchronization
+      const t = analysis.turns[activeTurnIndex];
+      if (t) {
+        const percent = ((now - t.startTime) / Math.max(0.1, t.endTime - t.startTime)) * 100;
+        setPlayProgress(Math.min(100, Math.max(0, percent)));
+        if (now >= t.endTime) {
+          stopAnyPlayback();
+        }
       }
     }
   };
